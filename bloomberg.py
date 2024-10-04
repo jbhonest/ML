@@ -1,5 +1,6 @@
 from selenium import webdriver
 from bs4 import BeautifulSoup
+from datetime import datetime
 import psycopg2
 import time
 
@@ -31,7 +32,9 @@ def save_to_database(url, title, content):
 
             # Commit the transaction
             connection.commit()
-            print("Data inserted successfully into database")
+            current_time = datetime.now()
+            print(f"Data inserted successfully into database at {
+                  current_time.strftime("%H:%M")}")
             return True
 
         except Exception as error:
@@ -114,4 +117,4 @@ for url in urls:
         remove_url_from_file(url_file, url)
 
     # Slow down requests with sleep
-    time.sleep(180)  # Sleep for 2 minutes
+    time.sleep(300)  # Sleep for 2 minutes
