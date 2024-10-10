@@ -1,3 +1,8 @@
 update articles
-set category='Politics'
-where category is null
+set category = 'economics'
+where category = 'v2';
+
+select category, count(*) from articles
+group by category;
+
+

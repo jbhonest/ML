@@ -5,7 +5,7 @@ import psycopg2
 import time
 
 
-def save_to_database(url, title, content):
+def save_to_database(url, title, content, category):
     """Saves the scraped content into the PostgreSQL database."""
     if content:
         try:
@@ -26,9 +26,9 @@ def save_to_database(url, title, content):
 
             # Insert title and content into the table
             cursor.execute('''
-                INSERT INTO articles (url, title, content) 
-                VALUES (%s, %s, %s)
-            ''', (url, title, content))
+                INSERT INTO articles (url, title, content, category) 
+                VALUES (%s, %s, %s, %s)
+            ''', (url, title, content, category))
 
             # Commit the transaction
             connection.commit()
@@ -46,13 +46,21 @@ def save_to_database(url, title, content):
                 cursor.close()
                 connection.close()
     else:
-        print("No content to save to the database")
+        current_time = datetime.now()
+        print(f"No content to save to the database at {
+              current_time.strftime("%H:%M")}")
         return False
+
+
+def extract_category(url):
+    category = url.split('=')[-1]
+    category = category.split('-')[-1]
+    return category
 
 
 def scrape_content(url):
     try:
-        driver = webdriver.Chrome()  # Or use webdriver.Firefox(), etc.
+        driver = webdriver.Chrome()
 
         driver.get(url)
         # Get the page source
@@ -112,9 +120,10 @@ urls = read_urls_from_file(url_file)
 # Scrape and save content for each URL
 for url in urls:
     title, content = scrape_content(url)
-    success = save_to_database(url, title, content)
+    category = extract_category(url)
+    success = save_to_database(url, title, content, category)
     if success:
         remove_url_from_file(url_file, url)
 
     # Slow down requests with sleep
-    time.sleep(300)  # Sleep for 2 minutes
+    time.sleep(300)  # Sleep for 5 minutes
