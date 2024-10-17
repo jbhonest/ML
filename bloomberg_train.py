@@ -2,8 +2,13 @@ import joblib
 from sqlalchemy import create_engine
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.preprocessing import label_binarize
+from sklearn.metrics import RocCurveDisplay
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
@@ -86,5 +91,15 @@ print(f"Top terms for each category have been written to {output_path}")
 # Evaluate the model
 accuracy = model.score(X_test, y_test)
 print(f"Accuracy: {accuracy:.2f}")
+
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Calculate the F1 score
+f1 = f1_score(y_test, y_pred, average='macro')
+
+# Print the F1 score
+print(f"F1 Score: {f1:.2f}")
 
 joblib.dump(model, 'article_classifier.pkl')
