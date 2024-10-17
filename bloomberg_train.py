@@ -7,7 +7,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.preprocessing import label_binarize
-from sklearn.metrics import RocCurveDisplay
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -29,10 +28,13 @@ engine = create_engine(
 query = "SELECT content, category FROM articles"
 articles = pd.read_sql(query, engine)
 
+X = articles['content']
+y = articles['category']
+
 
 # Split the data
 X_train, X_test, y_train, y_test = train_test_split(
-    articles['content'], articles['category'], test_size=0.2, random_state=42)
+    X, y, test_size=0.3, random_state=42)
 
 # Create a pipeline for TF-IDF and Logistic Regression
 model = make_pipeline(TfidfVectorizer(
@@ -102,4 +104,41 @@ f1 = f1_score(y_test, y_pred, average='macro')
 # Print the F1 score
 print(f"F1 Score: {f1:.2f}")
 
+# Save the model
 joblib.dump(model, 'article_classifier.pkl')
+
+
+# Define the classes
+classes = ["politics", "technology", "economics"]
+
+# Get predicted probabilities (needed for ROC curves)
+y_score = model.predict_proba(X_test)
+
+# Binarize the test labels (needed for ROC curve and AUC)
+y_test_bin = label_binarize(y_test, classes=classes)
+
+# Plotting the ROC curves for each class
+plt.figure(figsize=(8, 6))
+
+for i, class_name in enumerate(classes):
+    # Compute ROC curve and AUC for each class
+    fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_score[:, i])
+    roc_auc = roc_auc_score(y_test_bin[:, i], y_score[:, i])
+
+    # Plot the ROC curve
+    plt.plot(fpr, tpr, label=f'ROC curve ({
+             class_name}, AUC = {roc_auc:.2f})')
+
+# Plot the random guess line (diagonal)
+plt.plot([0, 1], [0, 1], 'k--', lw=2)
+
+# Set plot labels and title
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Multiclass ROC Curves')
+plt.legend(loc="lower right")
+
+# Show the plot
+plt.show()
