@@ -5,7 +5,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import roc_curve, roc_auc_score, ConfusionMatrixDisplay
 from sklearn.preprocessing import label_binarize
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -105,11 +105,19 @@ f1 = f1_score(y_test, y_pred, average='macro')
 print(f"F1 Score: {f1:.2f}")
 
 # Save the model
-joblib.dump(model, 'article_classifier.pkl')
+classifier_file = 'article_classifier.pkl'
+joblib.dump(model, classifier_file)
+print(f"The model has been written to {classifier_file}")
+
+
+# Plot the confusion matrix
+ConfusionMatrixDisplay.from_predictions(
+    y_test, y_pred, display_labels=model.classes_, cmap='Blues')
+plt.title('Confusion Matrix')
 
 
 # Define the classes
-classes = ["politics", "technology", "economics"]
+classes = ["technology", "economics", "politics"]
 
 # Get predicted probabilities (needed for ROC curves)
 y_score = model.predict_proba(X_test)
@@ -120,7 +128,9 @@ y_test_bin = label_binarize(y_test, classes=classes)
 # Plotting the ROC curves for each class
 plt.figure(figsize=(8, 6))
 
+
 for i, class_name in enumerate(classes):
+
     # Compute ROC curve and AUC for each class
     fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_score[:, i])
     roc_auc = roc_auc_score(y_test_bin[:, i], y_score[:, i])
